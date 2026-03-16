@@ -18,12 +18,29 @@ while True:
 
     # 1. Face landmarks detection
     landmarks = fl.get_facial_landmarks(frame)
+    if landmarks.size == 0:
+        cv2.imshow("Frame", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        continue
     convexhull = cv2.convexHull(landmarks)
 
+    # 2. Face blurring
     mask = np.zeros((height, width), np.uint8)
-    cv2.polylines(frame, [convexhull], True, (0, 255, 0), 2)
+    cv2.fillConvexPoly(mask, convexhull, 255)
 
-    cv2.imshow("Frame", frame)
+    # Extract the face
+    frame_copy = cv2.blur(frame_copy, (27, 27))
+    face_extracted = cv2.bitwise_and(frame_copy, frame_copy, mask=mask)
+
+    # Extract background
+    background_mask = cv2.bitwise_not(mask)
+    background = cv2.bitwise_and(frame, frame, mask=background_mask)
+
+    # Final result
+    result = cv2.add(background, face_extracted)
+
+    cv2.imshow("Frame", result)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
